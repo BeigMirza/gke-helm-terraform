@@ -1,0 +1,81 @@
+                                                                :Documentation:
+																
+main.tf: This authenticate to "google" provider and "helm" provider.
+gke.tf: This create custom GKE cluster and custom node pools.
+workload.tf: This file contain resources to be created refering helm charts for various applications. grafana,prometheus,prometheus-blackbox-exporter,pingapi & pingreq applications.
+custom_chart_grafana: This folder contain packaged grafana helm chart.
+custom_chart_pingApi: This folder contain packaged grafana helm chart for pingapi and pingapi request sender(pingreq).
+gke-helm-431811-d2d2a95ce3eb.json : This is service_account json file which help authenticate to gcloud.
+values-prometheus.yaml : This file is consumed by prometheus helm chart, referred in workload.tf file.
+
+why i have choosen GKE and not minikube ? -- I have some issues with my personal laptop.Hence, i choose to opt for a cloud provider platform. In case of GCP, I can spin up GKE cluster free of cost. So that's why i have choosen gcp.
+
+=================================================================================================================================
+run the below commands from terraform root directory i.e. "terraform_gke" folder:
+
+terraform init 
+terraform plan
+terraform apply -auto-approve
+
+## Wait for 10-15 mints, as gke cluster takes ~10 mins to create, and other resources will take 2-3 mins.
+
++++++++++++++++++++++In the meantime,install required packages which will help you to interact with newly created cluster++++++++++++++++
+Install the gcloud CLI in your laptop:(please follow the steps given in the below url)
+https://cloud.google.com/sdk/docs/install#windows
+
+##please share your gmail with me, so that i can configure access for you to my gcp account and you can see the cluster and workloads using kubectl commands.
+
+To obtain access credentials for your user account(i.e your gmail, once i configure your gmail in my google account), run:
+$ gcloud auth login
+## this will give a url, go to browser with this url and authenticate using your configured gmail(it will take 5s)
+
+Set the project_id:(use gke-helm-431811 only, dont change it)
+$ gcloud config set project gke-helm-431811
+
+to validate config details:
+$ gcloud config list
+
+Install the kubectl component:
+$ gcloud components install kubectl
+
+Verify that kubectl is installed by checking it has the latest version:
+$ kubectl version --client
+
+Install the gke-gcloud-auth-plugin binary:
+$ gcloud components install gke-gcloud-auth-plugin
+
+Check the gke-gcloud-auth-plugin binary version:
+$ gke-gcloud-auth-plugin --version
+
+Update the kubectl configuration to use the plugin:
+$ gcloud container clusters get-credentials my-gke-cluster --region=asia-south1
+
+##Now you can run kubectl commands to interact with created Kubernetes cluster.
+after installation completed run below commands to check the resources:
+
+kubectl get all
+
+take the EXTERNAL-IP and login in browser:
+kubectl get svc my-local-release-grafana
+
+get the password of the grafana app:(below output is base64 encoded, decode it in browser using https://www.base64decode.org/)
+kubectl get secret my-local-release-grafana -o jsonpath="{.data.admin-password}"
+
+## default grafana username is "admin"
+
+# login to grafana to check the dashboards, one dashboard shows basic cluster details and other one shows response code from pingapi and if it is up or not.
+# To check any other config related to workload, please run kubectl command.
+
+=======================================Test the pingapi by running below command to check it is returning pong to /ping request:=========================================
+
+get the pingreq pod name by running: $ kubectl get pods --no-headers | grep '^pingreq'
+sending req from pingreq pod to svc behind which pingapi is running:
+$ kubectl exec pingreq-75696dbdd7-xv8kq -- curl -s http://pingpongapi-pingapi.default.svc.cluster.local:80/ping
+
+## it should return "pong"
+## Feel Free to call on 7001589713, in case of any query or doubt.
+
+
+
+
+
